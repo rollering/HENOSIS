@@ -41,8 +41,8 @@ class Transformer(nn.Module):
 class TransFormer(nn.Module):
     def __init__(self,embed_file,embed_size,d_model,num_heads,num_layers,species_mapping=None):
         super().__init__()
-        #self.embed=MultipcaEmbedding(embed_file,embed_size,d_model,species_mapping=species_mapping)
-        self.embed=multiPcaEmbedding(embed_file,species_mapping=species_mapping)
+        self.embed=MultipcaEmbedding(embed_file,embed_size,d_model,species_mapping=species_mapping)
+        #self.embed=multiPcaEmbedding(embed_file,species_mapping=species_mapping)
         self.num_species = self.embed.num_species
         self.layers = nn.ModuleList([
             ResidualAttentionBlock(d_model, num_heads,) for _ in range(num_layers)

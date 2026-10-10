@@ -9,7 +9,7 @@ from model.resa import Transformer,TransFormer
 from model.const import *
 
 class SwAV(nn.Module):
-    def __init__(self,embed_file,d_model,input_size,latent_size,num_layers,n_clusters,scale=4,num_heads=8,dropout=0.1,
+    def __init__(self,embed_file,d_model,embed_size,latent_size,num_layers,n_clusters,scale=4,num_heads=8,dropout=0.1,
                  init_logit_scale: float = np.log(1 / 0.07),
                  nonscalar_logit_scale: bool = False,
                  log1p=False,modality='scrna',species_mapping=None):
@@ -19,12 +19,13 @@ class SwAV(nn.Module):
         lshape = [1] if nonscalar_logit_scale else []
         self.logit_scales = nn.ParameterDict({k:torch.ones(lshape) * init_logit_scale for k in embed_file})
         
-        self.transformer=Transformer(embed_file,d_model,num_heads,num_layers,n_clusters,scale=scale,dropout=dropout,modality=modality,species_mapping=species_mapping)
+        #self.transformer=Transformer(embed_file,d_model,num_heads,num_layers,n_clusters,scale=scale,dropout=dropout,modality=modality,species_mapping=species_mapping)
+        self.transformer=TransFormer(embed_file,embed_size,d_model,num_heads,num_layers,species_mapping=species_mapping)
         self.num_species = self.transformer.num_species
         self.protein_projection=nn.Parameter(torch.randn(d_model,latent_size))
-        self.gene_projection=nn.Parameter(torch.randn(input_size,latent_size))
+        self.gene_projection=nn.Parameter(torch.randn(50,latent_size))
         self.gene_projections = nn.Parameter(
-            torch.randn(self.num_species, input_size, latent_size)
+            torch.randn(self.num_species, 50, latent_size)
         )
     def encode_protein(self,input_ids,sp,padding_mask=None):
         x=self.transformer(input_ids,sp)
@@ -64,10 +65,10 @@ class sWAV(nn.Module):
         self.num_species = self.transformer.num_species
         self.protein_projection=nn.Parameter(torch.randn(d_model,latent_size))
 
-        '''self.gene_projection=nn.Parameter(torch.randn(50,latent_size))
+        self.gene_projection=nn.Parameter(torch.randn(50,latent_size))
         self.gene_projections = nn.Parameter(
             torch.randn(self.num_species, 50, latent_size)
-        )'''
+        )
     def encode_protein(self,input_ids,sp,padding_mask=None):
         x=self.transformer(input_ids,sp)
         attention_mask = (input_ids != 0).int()
@@ -89,63 +90,6 @@ class sWAV(nn.Module):
         x=x@self.protein_projection
         return F.normalize(x,dim=-1)
 
-
-class PeakSwAV(nn.Module):
-    def __init__(self,species_to_embed_file,d_model,latent_size,num_layers,species_mapping,
-                 contribution_dim=256,hidden_dim=512,init_logit_scale: float = np.log(1 / 0.07),nonscalar_logit_scale: bool = False,):
-        super().__init__()
-        lshape = [1] if nonscalar_logit_scale else []
-        self.logit_scales = nn.ParameterDict({k:torch.ones(lshape) * init_logit_scale for k in species_to_embed_file})
-        self.logit_scale_names = sorted(self.logit_scales.keys(), key=species_mapping.__getitem__)
-
-        self.transformer=Transformer(species_to_embed_file,d_model,num_heads=8,num_layers=num_layers,n_clusters=1000000,modality="atac",species_mapping=species_mapping)
-        self.num_species = self.transformer.num_species
-        self.sequence_projection = nn.Linear(d_model, contribution_dim, bias=False)
-        input_dim = contribution_dim * 1 + 3
-        self.correction = nn.Sequential(
-            nn.Linear(input_dim, hidden_dim),
-            nn.GELU(),
-            nn.LayerNorm(hidden_dim),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.GELU(),
-            nn.Linear(hidden_dim, latent_size),
-        )
-
-    def encode_protein(self,input_ids,sp,):
-        x=self.transformer(input_ids,sp)
-
-        padding_mask = input_ids == 0
-        mask=padding_mask.unsqueeze(-1)
-        valid_lens=padding_mask.sum(dim=1).unsqueeze(-1)
-        count = padding_mask.sum(dim=1, keepdim=True).to(dtype=x.dtype)
-        total_counts = padding_mask.sum(dim=1, keepdim=True).clamp_min(1.0)
-        safe_count = count.clamp_min(1.0)
-        
-        contextual=self.sequence_projection(x)
-        contextual = contextual * mask
-        contextual_mean = (contextual).sum(dim=1) /valid_lens
-
-        log_count = torch.log1p(count) / math.log(512.0)
-        log_total_counts = torch.log1p(total_counts) / math.log(2048.0)
-        inverse_sqrt_count = safe_count.rsqrt()
-
-        summary=torch.cat([contextual_mean,log_count,log_total_counts,inverse_sqrt_count],dim=1)
-
-        return self.correction(summary)
-
-    def encode_gene(self,adata,sp):
-        return F.normalize(adata,dim=-1)
-
-    def forward(self,input_ids,adata,sp):
-        protein_features = self.encode_protein(input_ids,sp,)
-        gene_features=self.encode_gene(adata,sp)
-        logit_scales = torch.stack([self.logit_scales[name] for name in self.logit_scale_names])
-        return protein_features,gene_features,logit_scales
-
-
-
-
-    
 
     
 class SwAVLoss(nn.Module):

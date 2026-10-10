@@ -33,7 +33,8 @@ except ImportError as exc:
     
 from model import data
 from model.const import set_species_context
-from model.peak_student import PeakSetReconstructionHead
+from model.peak_student import PEAK_HEAD_TYPES, build_peak_set_head
+import model.peak_student as peak_student
 import model.lr_schedule as lr_sche
 import model.swav as swav
 import model.mmd as mmd
@@ -94,13 +95,17 @@ def compute_ml_weight(
 class BtacDDPSwAV(swav.SwAV):
     """SwAV adapter that exposes loss parameters through the DDP forward."""
 
-    def __init__(self, *args, species_mapping, **kwargs):
+    def __init__(
+        self, *args, species_mapping, peak_head_type="reconstruction", **kwargs
+    ):
         super().__init__(*args, species_mapping=species_mapping, **kwargs)
         self.logit_scale_names = sorted(
             self.logit_scales.keys(), key=species_mapping.__getitem__
         )
         embedding = self.transformer.embed.gene_embed
-        self.peak_set_head = PeakSetReconstructionHead(
+        self.peak_head_type = peak_head_type
+        self.peak_set_head = build_peak_set_head(
+            peak_head_type,
             sequence_dim=embedding.embedding_dim,
             output_dim=self.protein_projection.shape[1],
             #vocab_size=embedding.num_embeddings,
@@ -111,23 +116,24 @@ class BtacDDPSwAV(swav.SwAV):
     ):
         """Predict the paired peak representation without unit normalization."""
         #if padding_mask is None:
-        padding_mask = input_ids == 0
+        #padding_mask = input_ids == 0
         sequence_x = self.transformer.embed(input_ids, sp)
         #if peak_values is None:
-        peak_values = (input_ids > 3).to(dtype=sequence_x.dtype)
-        count_scale = 1.0 + torch.log1p(
+        #peak_values = (input_ids > 3).to(dtype=sequence_x.dtype)
+        '''count_scale = 1.0 + torch.log1p(
             peak_values.to(dtype=sequence_x.dtype)
-        )
+        )'''
         contextual_x = sequence_x #* count_scale.unsqueeze(-1)
         for layer in self.transformer.layers:
             contextual_x = layer(contextual_x, padding_mask=None)
 
-        offsets = self.transformer.embed.offsets_lookup_tensor[sp].unsqueeze(1)
+        #offsets = self.transformer.embed.offsets_lookup_tensor[sp].unsqueeze(1)
         #global_token_ids = input_ids + offsets * (input_ids > 3)
         return self.peak_set_head(
             sequence_x,
             contextual_x,
-            input_ids > 3,
+            #input_ids > 3,
+            input_ids != 0,
         )
 
     def forward(
@@ -714,12 +720,15 @@ def make_inference_loader(dataset, batch_size=INFERENCE_BATCH_SIZE):
     )
 
 
-def build_model(species_to_embed_file, species_mapping):
+def build_model(
+    species_to_embed_file, species_mapping, peak_head_type="reconstruction"
+):
     """Build the exact architecture used by both training and inference."""
-    return BtacDDPSwAV(
+    return peak_student.BtacDDPSwAV(
         {species: str(path) for species, path in species_to_embed_file.items()},
         d_model=120,
-        input_size=50,
+        #input_size=50,
+        embed_size=1536,
         # Match X_lsi_harmony so the paired cell can be supervised directly.
         latent_size=64,
         num_layers=1,
@@ -727,16 +736,22 @@ def build_model(species_to_embed_file, species_mapping):
         scale=1,
         modality="atac",
         species_mapping=species_mapping,
+        peak_head_type=peak_head_type,
     )
 
 
-def load_trained_model(net_path, species_to_embed_file, species_mapping, device):
+def load_trained_model(
+    net_path, species_to_embed_file, species_mapping, device,
+    peak_head_type="reconstruction",
+):
     """Load a saved DDP model as a regular single-device model."""
     net_path = Path(net_path)
     if not net_path.is_file():
         raise FileNotFoundError(f"Trained weights not found: {net_path}")
 
-    net = build_model(species_to_embed_file, species_mapping)
+    net = build_model(
+        species_to_embed_file, species_mapping, peak_head_type=peak_head_type
+    )
     state = torch.load(net_path, map_location="cpu", weights_only=True)
     if isinstance(state, dict) and "model_state_dict" in state:
         state = state["model_state_dict"]
@@ -755,13 +770,15 @@ def run_inference(
     embedding="protein",
     use_mot_correction=True,
     batch_size=INFERENCE_BATCH_SIZE,
+    peak_head_type="reconstruction",
 ):
     """Infer all cells in order, build an integrated AnnData, and draw UMAP."""
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     dataset = load_arrow_dataset(species_to_h5ad, species_to_embed_file)
     inference_loader = make_inference_loader(dataset, batch_size=batch_size)
     net = load_trained_model(
-        net_path, species_to_embed_file, species_mapping, device
+        net_path, species_to_embed_file, species_mapping, device,
+        peak_head_type=peak_head_type,
     )
     species_to_adata = {
         species: sc.read_h5ad(path, backed="r")
@@ -1090,6 +1107,12 @@ def parse_args():
     )
     parser.add_argument("--mode", choices=("train", "infer"), default="infer")
     parser.add_argument(
+        "--peak-head-type",
+        choices=tuple(PEAK_HEAD_TYPES),
+        default="reconstruction",
+        help="Peak head architecture; use the same type for training and inference.",
+    )
+    parser.add_argument(
         "--training-objective",
         choices=("paired", "global_knn", "batch_knn"),
         default="batch_knn",
@@ -1196,6 +1219,7 @@ def main(args=None):
             embedding=args.embedding,
             use_mot_correction=args.mot_correction,
             batch_size=args.batch_size,
+            peak_head_type=getattr(args, "peak_head_type", "reconstruction"),
         )
         if args.output is not None:
             args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -1239,7 +1263,11 @@ def main(args=None):
             dataset, species_sizes, rank, world_size
         )
         
-        net = build_model(species_to_embed_file, species_mapping)
+        net = build_model(
+            species_to_embed_file,
+            species_mapping,
+            peak_head_type=getattr(args, "peak_head_type", "reconstruction"),
+        )
         train_ddp(
             net,
             train_loader,

@@ -36,7 +36,7 @@ train_loader, test_loader = data.prepare_multispecies_dataloaders(
     tokenized,
     batch_size=128,
     species_to_reps=species_to_reps,
-    batch_species=2,
+    batch_species=num_species,
 )
 
 Refer to the notebook files for the training procedure.
