@@ -68,7 +68,7 @@ class TransFormer(nn.Module):
 
 
 class ReSA(nn.Module):
-    def __init__(self,embed_file,d_model,input_size,latent_size,num_layers,n_clusters,scale=4,num_heads=8,dropout=0.1,
+    def __init__(self,embed_file,d_model,embed_size,latent_size,num_layers,n_clusters=100000,scale=4,num_heads=8,dropout=0.1,input_size=50,
                  init_logit_scale: float = np.log(1 / 0.07),
                  nonscalar_logit_scale: bool = False,
                  log1p=False,line_attn=False,adv=False,modality='scrna',species_mapping=None):
@@ -78,7 +78,8 @@ class ReSA(nn.Module):
         lshape = [1] if nonscalar_logit_scale else []
         self.logit_scale = nn.Parameter(torch.ones(lshape) * init_logit_scale)
         
-        self.transformer=Transformer(embed_file,d_model,num_heads,num_layers,n_clusters,scale=scale,dropout=dropout,modality=modality,species_mapping=species_mapping)
+        #self.transformer=Transformer(embed_file,d_model,num_heads,num_layers,n_clusters,scale=scale,dropout=dropout,modality=modality,species_mapping=species_mapping)
+        self.transformer=TransFormer(embed_file,embed_size,d_model,num_heads,num_layers,species_mapping=species_mapping)
         self.num_species = self.transformer.num_species
         self.protein_projection=nn.Parameter(torch.randn(d_model,latent_size))
         self.gene_projection=nn.Parameter(torch.randn(input_size,latent_size))

@@ -161,11 +161,11 @@ class multiCompressEmbedding(nn.Module):
             if self.compress:
                 self.embed_matrix=(self.embed_matrix.reshape(self.embed_matrix.shape[0],-1,scale)).mean(dim=2)
             self.embed_matrix=F.normalize(self.embed_matrix, p=2, dim=1)
-        if n_clusters<=len(self.embed_matrix):
+        '''if n_clusters<=len(self.embed_matrix):
             kmeans=KMeans(n_clusters=n_clusters, random_state=42).fit(self.embed_matrix.numpy())
             centroids = kmeans.cluster_centers_
             labels=kmeans.labels_
-            self.embed_matrix=torch.tensor(centroids[labels])
+            self.embed_matrix=torch.tensor(centroids[labels])'''
 
         self.gene_embed=nn.Embedding.from_pretrained(
             embeddings=self.embed_matrix,

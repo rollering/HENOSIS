@@ -37,6 +37,7 @@ from model.peak_student import PEAK_HEAD_TYPES, build_peak_set_head
 import model.peak_student as peak_student
 import model.lr_schedule as lr_sche
 import model.swav as swav
+import model.resa as resa
 import model.mmd as mmd
 from model.evaluate import evaluate_integration
 
@@ -1029,6 +1030,7 @@ def train_ddp(
         pair_loss_fn = swav.PairedTeacherAlignmentLoss().to(device)
     else:'''
     loss_fn = swav.MultiScaleATACKNNLoss().to(device)
+    #loss_fn=resa.MultiScaleReSALoss().to(device)
     pair_loss_fn = None
     loss_fn1 = mmd.MMMD(kernel_type="rbf", each=True).to(device)
     optimizer = torch.optim.AdamW(net.parameters(), lr=lr, fused=True)

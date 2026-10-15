@@ -126,7 +126,7 @@ class PeakSetReconstructionHead(nn.Module):
         return self.correction(summary)#self.base_projection(weighted_l2) + self.correction(summary)
 
 class PeakSetHead(nn.Module):
-    def __init__(self, sequence_dim, output_dim, hidden_dim=256):
+    def __init__(self, sequence_dim, output_dim, hidden_dim=256,input_dim=50):
         super().__init__()
         self.projection = nn.Sequential(
             nn.Linear(sequence_dim, output_dim, bias=False),
@@ -134,9 +134,9 @@ class PeakSetHead(nn.Module):
             #nn.GELU(),
             #nn.Linear(hidden_dim, output_dim, bias=False),
         )
-        self.gene_projection=nn.Parameter(torch.randn(50,output_dim))
+        self.gene_projection=nn.Parameter(torch.randn(input_dim,output_dim))
         self.gene_projections = nn.Parameter(
-            torch.randn(2, 50, output_dim)
+            torch.randn(2, input_dim, output_dim)
         )
 
     def forward(
