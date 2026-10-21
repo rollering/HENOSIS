@@ -1,23 +1,43 @@
-# Henosis
+<h1 align="center">Henosis</h1>
+
+<p align="center">
+  <strong>Cross-species representation learning for single-cell data</strong>
+</p>
+
+<p align="center">
+  <a href="#overview">Overview</a> &middot;
+  <a href="#environment-setup">Installation</a> &middot;
+  <a href="#input-data">Input data</a> &middot;
+  <a href="#python-workflow">Workflow</a> &middot;
+  <a href="#examples">Examples</a>
+</p>
+
+## Overview
 
 Henosis supports representation learning and integration across species for
 single-cell data. The core workflow takes an AnnData object and precomputed gene
 embeddings for each species, converts cells into gene token sequences, and uses
 these inputs for model training, embedding inference, and visualization.
 
+<p align="center">
+  <strong>Single-cell data &rarr; Gene tokens &rarr; Cross-species learning &rarr; Cell embeddings</strong>
+</p>
+
 ![Overview of the Henosis framework and its applications](figures/265e6a14-6403-4902-893d-d2cc933f72c8.png)
 
-*Henosis overview. (a) Sequence-based feature embeddings, cell tokenization, and
-teacher–student learning for cross-species alignment. (b) Applications in
-cross-species and cross-modal integration, cell type transfer, and interpretation.*
+*Henosis framework: (a) representation learning and alignment; (b) downstream applications.*
+
+The framework combines sequence-based feature embeddings, cell tokenization,
+and teacher–student learning for cross-species alignment. Applications include
+cross-species and cross-modal integration, cell type transfer, and interpretation.
+
+## Environment setup
 
 After cloning, run the commands below from the repository root, which contains
 this README and `Henosis/`. Once the dependencies are available, you can import
 `Henosis` directly from source without installing this project. For the notebooks
 in the repository root, select a kernel from the same environment and keep the
 working directory at the repository root.
-
-## Environment setup
 
 The configuration in [`environment.yml`](environment.yml) is based on the author's
 `hle_env` environment and targets the tokenization, training, and evaluation
@@ -37,6 +57,17 @@ python -m pip install torch==2.6.0+cu124 --index-url https://download.pytorch.or
 GPU training requires an available NVIDIA GPU and a driver compatible with CUDA
 12.4. The PyTorch installation command follows the
 [official instructions for previous versions](https://pytorch.org/get-started/previous-versions/#v260).
+
+**Validation status:** Conda dependency resolution (`--dry-run`) has passed.
+Installation in a fresh environment, including pip dependencies, and end-to-end
+training have not yet been validated.
+
+Before GPU training, run the environment check below and confirm that the output
+includes `CUDA available: True`.
+
+<details>
+<summary><strong>CPU installation for import checks and preprocessing</strong></summary>
+
 For import checks or CPU preprocessing, replace the PyTorch installation command
 above with:
 
@@ -44,11 +75,21 @@ above with:
 python -m pip install torch==2.6.0+cpu --index-url https://download.pytorch.org/whl/cpu
 ```
 
+</details>
+
+<details>
+<summary><strong>Register a Jupyter notebook kernel</strong></summary>
+
 Register the environment as a notebook kernel, then select it in your notebook:
 
 ```bash
 python -m ipykernel install --user --name hle_env --display-name "Python (hle_env)"
 ```
+
+</details>
+
+<details>
+<summary><strong>Check the environment and CUDA availability</strong></summary>
 
 After installation, check the environment from the same directory:
 
@@ -75,12 +116,10 @@ print("Core imports and NumPy/PyTorch interop: OK")
 PY
 ```
 
-Before GPU training, confirm that the output includes `CUDA available: True`.
 This check verifies imports and NumPy/PyTorch interoperability; training also
-requires the data and embeddings described below. The environment file records
-versions from an existing environment, and Conda dependency resolution
-(`--dry-run`) has passed. Installation in a fresh environment, including pip
-dependencies, and end-to-end training have not yet been validated.
+requires the data and embeddings described below.
+
+</details>
 
 ## Input data
 
@@ -187,6 +226,8 @@ net = Henosis(
     species_mapping=species_mapping,
 )
 ```
+
+<a id="examples"></a>
 
 The model is untrained at this point. See these notebooks for training loops,
 loss functions, and optimizer settings:
