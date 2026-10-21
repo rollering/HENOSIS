@@ -31,15 +31,15 @@ except ImportError as exc:
         "`pip install datasets` in the training environment."
     ) from exc
     
-from model import data
-from model.const import set_species_context
-from model.peak_student import PEAK_HEAD_TYPES, build_peak_set_head
-import model.peak_student as peak_student
-import model.lr_schedule as lr_sche
-import model.swav as swav
-import model.resa as resa
-import model.mmd as mmd
-from model.evaluate import evaluate_integration
+from Henosis import data
+from Henosis.const import set_species_context
+from Henosis.peak_student import PEAK_HEAD_TYPES, build_peak_set_head
+import Henosis.peak_student as peak_student
+import Henosis.lr_schedule as lr_sche
+import Henosis.swav as swav
+import Henosis.resa as resa
+import Henosis.mmd as mmd
+from Henosis.evaluate import evaluate_integration
 
 ORGAN='btac'
 SCRIPT_DIRECTORY = Path(__file__).resolve().parent

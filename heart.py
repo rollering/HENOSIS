@@ -37,10 +37,10 @@ except ImportError as exc:
     ) from exc
 
 from dpbig import cleanup_distributed, setup_distributed, train_ddp
-from model import data
-from model.const import set_species_context
-import model.resa as resa
-from model.evaluate import evaluate_integration
+from Henosis import data
+from Henosis.const import set_species_context
+import Henosis.resa as resa
+from Henosis.evaluate import evaluate_integration
 
 SCRIPT_DIRECTORY = Path(__file__).resolve().parent
 RUN_DIRECTORY = SCRIPT_DIRECTORY / "heart_runs"
@@ -77,6 +77,8 @@ CACHE_FORMAT_VERSION = 2
 PREPROCESS_POLL_SECONDS = 10
 SAMPLER_SCALE = 0.4
 WEIGHTED_NUM_SCALE = 1.5
+
+
 
 
 def load_inputs():
