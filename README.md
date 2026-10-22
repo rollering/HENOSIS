@@ -1,14 +1,16 @@
-<h1 align="center">Hen<img src="figures/logo.png" alt="o" height="32" align="middle">sis</h1>
+<p align="center">
+  <img src="figures/logo.png" alt="Henosis" width="360">
+</p>
 
 <p align="center">
   <strong>Cross-species representation learning for single-cell data</strong>
 </p>
 
 <p align="center">
-  <a href="#overview">Overview</a> &middot;
-  <a href="#environment-setup">Installation</a> &middot;
-  <a href="#input-data">Input data</a> &middot;
-  <a href="#python-workflow">Workflow</a> &middot;
+  <a href="#overview">Overview</a> &nbsp;&middot;&nbsp;
+  <a href="#environment-setup">Installation</a> &nbsp;&middot;&nbsp;
+  <a href="#input-data">Input data</a> &nbsp;&middot;&nbsp;
+  <a href="#python-workflow">Workflow</a> &nbsp;&middot;&nbsp;
   <a href="#examples">Examples</a>
 </p>
 
@@ -25,13 +27,15 @@ these inputs for model training, embedding inference, and visualization.
 
 ![Overview of the Henosis framework and its applications](figures/265e6a14-6403-4902-893d-d2cc933f72c8.png)
 
-*Henosis framework: (a) representation learning and alignment; (b) downstream applications.*
+<p align="center">
+  <em>Henosis framework: (a) representation learning and alignment; (b) downstream applications.</em>
+</p>
 
 The framework combines sequence-based feature embeddings, cell tokenization,
 and teacher–student learning for cross-species alignment. Applications include
 cross-species and cross-modal integration, cell type transfer, and interpretation.
 
-downstream applications:https://biobigdata.nju.edu.cn//HenosisDataset/
+Explore the [downstream application datasets](https://biobigdata.nju.edu.cn//HenosisDataset/).
 
 ## Environment setup
 
