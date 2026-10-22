@@ -504,6 +504,18 @@ def parse_args():
         choices=("net", "peft"),default="net"
     )
 
+    parser.add_argument(
+        "--weights_pth",
+        type=Path,
+        help="net weights path",
+    )
+
+    parser.add_argument(
+        '--peft_weights_pth',
+        type=Path,
+        help="peft weights path",
+    )
+
     return parser.parse_args()
 
 def main(args=None):
@@ -526,6 +538,7 @@ def main(args=None):
         net = resa.ReSA(
             {species: str(path) for species, path in species_to_embed_file.items()},
             d_model=120,
+            embed_size=480,
             input_size=50,
             latent_size=64,
             num_layers=1,
@@ -534,9 +547,9 @@ def main(args=None):
             species_mapping=species_mapping,
         )
         if args.infer_weights=="net":
-            infer_weights_path=NET_PATH 
+            infer_weights_path=args.weights_pth
         elif args.infer_weights=="peft":
-            infer_weights_path=PEFT_PATH
+            infer_weights_path=args.peft_weights_pth
         state = torch.load(infer_weights_path, map_location="cpu", weights_only=True)
         if isinstance(state, dict) and "model_state_dict" in state:
             state = state["model_state_dict"]
@@ -578,6 +591,7 @@ def main(args=None):
             net = resa.ReSA(
                 {species: str(path) for species, path in species_to_embed_file.items()},
                 d_model=120,
+                embed_size=480,
                 input_size=50,
                 latent_size=64,
                 num_layers=1,
@@ -590,7 +604,7 @@ def main(args=None):
                 train_loader,
                 epochs=200,
                 lr=1e-3,
-                net_path=NET_PATH,
+                net_path=args.weights_pth,
                 temp=0.2,
                 ml_weight=0.0,
                 device=device,
@@ -625,6 +639,7 @@ def main(args=None):
             net = resa.ReSA(
                 {species: str(path) for species, path in species_to_embed_file.items()},
                 d_model=120,
+                embed_size=480,
                 input_size=50,
                 latent_size=64,
                 num_layers=1,
@@ -633,7 +648,7 @@ def main(args=None):
                 species_mapping=species_mapping,
             )
 
-            state = torch.load(NET_PATH, map_location="cpu", weights_only=True)
+            state = torch.load(args.weights_pth, map_location="cpu", weights_only=True)
             if isinstance(state, dict) and "model_state_dict" in state:
                 state = state["model_state_dict"]
             if state and all(key.startswith("module.") for key in state):
@@ -645,7 +660,7 @@ def main(args=None):
                 train_loader,
                 epochs=30,
                 lr=1e-3,
-                net_path=PEFT_PATH,
+                net_path=args.peft_weights_pth,
                 temp=0.2,
                 ml_weight=0.0,
                 device=device,

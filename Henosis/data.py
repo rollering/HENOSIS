@@ -783,7 +783,6 @@ def h5rcollate_fn(batch):
     return input_ids, matrix, sp
 
 def h5labelcollate_fn(batch):
-    print(batch)
     input_ids = [x['input_ids'] for x in batch]
     #matrix = torch.stack([x["processed_matrixs"] for x in batch], dim=0)
     matrix = [x["processed_matrixs"] for x in batch]
