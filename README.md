@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="figures/logo.png" alt="Henosis" width="360">
+  <img src="figures/e70edea4ea5de59f91374145750e5f2a.jpg" alt="Henosis" width="360">
 </p>
 
 <p align="center">
