@@ -154,7 +154,8 @@ class PeakSetHead(nn.Module):
             contextual_embeddings * mask
         ).sum(dim=1) / valid_lens
 
-        return self.projection(contextual_mean)
+        #return self.projection(contextual_mean)
+        return F.normalize(self.projection(contextual_mean),dim=-1)
 
 
 PEAK_HEAD_TYPES = {

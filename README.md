@@ -368,3 +368,7 @@ python btacsub.py --mode infer --metadata-columns Celltype --weights your_weight
 Note:
 after  [btacsub.py](btacsub.py) run, you need to run [rap.ipynb](rap.ipynb),which needs to use rapids-singlecell package(https://rapids-singlecell.scverse.org/en/latest/installation.html)
 figure6 : [pbmc1.ipynb](pbmc1.ipynb) [most.ipynb](mosp.ipynb)
+
+
+dataset:
+https://biobigdata.nju.edu.cn/HenosisDataset/
