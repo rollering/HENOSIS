@@ -9,6 +9,7 @@
 <p align="center">
   <a href="#overview">Overview</a> &nbsp;&middot;&nbsp;
   <a href="#environment-setup">Installation</a> &nbsp;&middot;&nbsp;
+  <a href="#reproduce-the-figures">Reproduce figures</a> &nbsp;&middot;&nbsp;
   <a href="#input-data">Input data</a> &nbsp;&middot;&nbsp;
   <a href="#python-workflow">Workflow</a> &nbsp;&middot;&nbsp;
   <a href="#examples">Examples</a>
@@ -35,7 +36,7 @@ The framework combines sequence-based feature embeddings, cell tokenization,
 and teacher–student learning for cross-species alignment. Applications include
 cross-species and cross-modal integration, cell type transfer, and interpretation.
 
-Explore the [downstream application datasets](https://biobigdata.nju.edu.cn//HenosisDataset/).
+Explore the [downstream application datasets](https://biobigdata.nju.edu.cn/HenosisDataset/).
 
 ## Environment setup
 
@@ -46,7 +47,7 @@ in the repository root, select a kernel from the same environment and keep the
 working directory at the repository root.
 
 The configuration in [`environment.yml`](environment.yml) is based on the author's
-`hle_env` environment and targets the tokenization, training, and evaluation
+`henosis_env` environment and targets the tokenization, training, and evaluation
 workflow below using existing h5ad and `avg.embeddings` files. The reference setup
 is Linux x86_64, Python 3.11.15, PyTorch 2.6.0 with CUDA 12.4, and Scanpy 1.11.5.
 Other platforms have not been validated.
@@ -56,7 +57,7 @@ the final command selects the CUDA 12.4 build used by the reference environment:
 
 ```bash
 conda env create -f environment.yml
-conda activate hle_env
+conda activate henosis_env
 python -m pip install torch==2.6.0+cu124 --index-url https://download.pytorch.org/whl/cu124
 ```
 
@@ -89,7 +90,7 @@ python -m pip install torch==2.6.0+cpu --index-url https://download.pytorch.org/
 Register the environment as a notebook kernel, then select it in your notebook:
 
 ```bash
-python -m ipykernel install --user --name hle_env --display-name "Python (hle_env)"
+python -m ipykernel install --user --name henosis_env --display-name "Python (henosis_env)"
 ```
 
 </details>
@@ -126,6 +127,165 @@ This check verifies imports and NumPy/PyTorch interoperability; training also
 requires the data and embeddings described below.
 
 </details>
+
+## Reproduce the figures
+
+The `figure*.ipynb` notebooks and `figure*.py` scripts are the figure reproduction
+examples. The Figure 6 brain notebook is currently named `figrue6_mospr.ipynb`.
+Complete [Environment setup](#environment-setup) first, then follow these steps
+from the repository root (the directory containing this README).
+
+### 1. Download the data
+
+Download the files for your chosen example from the
+[Henosis dataset website](https://biobigdata.nju.edu.cn/HenosisDataset/).
+Create a `data/` folder in the repository root and preserve the website's directory
+structure beneath it, including all nested folders and both the expression data
+and embeddings. Large data files are hosted separately from GitHub.
+
+| Reproduction file | Dataset directory to download into `data/` |
+| --- | --- |
+| [figure2_hippocampus.ipynb](figure2_hippocampus.ipynb) | `figure2/hippocampus/` |
+| [figure2_motor.ipynb](figure2_motor.ipynb) | `figure2/motor/` |
+| [figure2_pancreas.ipynb](figure2_pancreas.ipynb) | `figure2/pancreas/` |
+| [figure2_testis.ipynb](figure2_testis.ipynb) | `figure2/testis/` |
+| [figure3_heart.py](figure3_heart.py) | `figure3/heart/` |
+| [figure4_ageb.ipynb](figure4_ageb.ipynb) | `figure4/Aging_brain/` |
+| [figure4_Xenium_brain.ipynb](figure4_Xenium_brain.ipynb) | `figure4/Xenium_brain/` |
+| [figure5_btacsub.py](figure5_btacsub.py) | `figure5/deepcerevo/` |
+| [figure6_pbmc1.ipynb](figure6_pbmc1.ipynb) | `figure6/pbmc/` |
+| [figrue6_mospr.ipynb](figrue6_mospr.ipynb) | `figure6/brain/` |
+
+For example, the hippocampus files should appear at:
+
+```text
+data/figure2/hippocampus/
+├── h5ad/hippocampus/*.h5ad
+└── embedding/hippocampus/*.avg.embeddings
+```
+
+The examples read `./data/` by default. If you have set `HENOSIS_DATA_DIR`, they
+read that directory instead; it should contain the same `figure2/`, `figure3/`,
+etc. structure.
+
+### 2. Run a notebook (`.ipynb`)
+
+Open the chosen notebook in Jupyter or VS Code, select the `henosis_env` kernel, and
+keep its working directory at the repository root. Before running, select an
+available GPU in `CUDA_VISIBLE_DEVICES` (or `GPU`), and replace any remaining
+author-specific `/mnt/...` checkpoint, cache, or output paths with local paths.
+Create output directories as needed and use the same checkpoint path for saving
+and loading. Then restart the kernel and select **Run All** to execute the cells
+in order, including training before evaluation.
+
+**Figure 6 brain:** `figrue6_mospr.ipynb` uses the current repository's `Henosis/`
+implementation, including output normalization. It does not require a separate
+source snapshot or an existing `source_manifest.json`. Start from the repository
+root, select an available GPU with `GPU` in the first cell, and use a fresh kernel
+before **Run All**. Checkpoints and run configuration files are saved under
+`saved_good_runs/mosp_deterministic_<timestamp>/`.
+
+### 3. Run a Python script (`.py`)
+
+Activate the environment in a terminal at the repository root. Both figure scripts
+use distributed GPU training and must be launched with `torchrun` in training
+mode. Run the command for the figure you want to reproduce:
+
+```bash
+conda activate henosis_env
+mkdir -p outputs/figure3 outputs/figure5
+
+# Figure 3: heart training
+torchrun --standalone --nproc_per_node=1 figure3_heart.py \
+  --mode train --weights_pth outputs/figure3/heart.pth
+
+# Figure 5: ATAC training
+torchrun --standalone --nproc_per_node=1 figure5_btacsub.py \
+  --mode train --weights outputs/figure5/btac.pth
+```
+
+`--nproc_per_node=1` uses one GPU; change it to the number of GPUs you intend to
+use. After training completes, run inference with the checkpoint just saved:
+
+```bash
+python figure3_heart.py --mode infer \
+  --weights_pth outputs/figure3/heart.pth \
+  --output outputs/figure3/integrated.h5ad
+
+python figure5_btacsub.py --mode infer \
+  --weights outputs/figure5/btac.pth \
+  --output outputs/figure5/integrated.h5ad
+```
+
+Use `python figure3_heart.py --help` or `python figure5_btacsub.py --help` for
+additional options, including supervised training for Figure 3.
+
+### 4. Apply GPU Harmony to the Figure 3 and Figure 5 outputs
+
+For both `figure3_heart.py` and `figure5_btacsub.py`, follow inference with GPU
+Harmony integration in [rapids_singlecell.ipynb](rapids_singlecell.ipynb). Use the `integrated.h5ad` files saved
+above as inputs to this postprocessing step.
+
+**Separate environment required:** `rapids_singlecell` and its RAPIDS GPU
+dependencies are **not included** in the `environment.yml` / `henosis_env` setup
+above. Train and infer in `henosis_env`, then load the saved files in a separate
+environment configured using the
+[official rapids-singlecell installation tutorial](https://rapids-singlecell.scverse.org/en/stable/installation.html).
+Choose the CUDA installation that matches your GPU and driver; the Henosis
+PyTorch CUDA build alone does not establish compatibility with RAPIDS.
+
+For example, the official CUDA 12 wheel with its RAPIDS dependencies can be
+installed in a separate environment as follows (see the tutorial for current
+requirements and CUDA 13 or Conda alternatives):
+
+```bash
+conda create -n henosis_rapids -c conda-forge python=3.12 pip -y
+conda activate henosis_rapids
+python -m pip install "rapids-singlecell-cu12[rapids]" scanpy ipykernel \
+  --extra-index-url=https://pypi.nvidia.com
+python -m ipykernel install --user --name henosis_rapids \
+  --display-name "Python (henosis_rapids)"
+```
+
+Select the `Python (henosis_rapids)` notebook kernel, or run Python from that
+activated environment. From the repository root, process each output below
+(keep only the path for the figure you ran):
+
+```python
+from pathlib import Path
+import cupy as cp
+import numpy as np
+import scanpy as sc
+import rapids_singlecell as rsc
+
+for input_path in (
+    Path("outputs/figure3/integrated.h5ad"),
+    Path("outputs/figure5/integrated.h5ad"),
+):
+    adata = sc.read_h5ad(input_path)
+    # These files store the inferred Henosis embeddings in X.
+    adata.obsm["X_henosis"] = np.asarray(adata.X, dtype=np.float32)
+    adata.obs["species"] = adata.obs["species"].astype("category")
+    rsc.pp.harmony_integrate(
+        adata,
+        key="species",
+        basis="X_henosis",
+        adjusted_basis="X_henosis_harmony",
+    )
+    # Store a CPU array for h5ad serialization and downstream tools.
+    adata.obsm["X_henosis_harmony"] = cp.asnumpy(
+        adata.obsm["X_henosis_harmony"]
+    )
+    adata.write_h5ad(input_path.with_name("integrated_harmony.h5ad"))
+```
+
+The corrected embeddings are stored in `adata.obsm["X_henosis_harmony"]` in
+each `integrated_harmony.h5ad`; `adata.X` retains the original Henosis embeddings.
+Use the corrected representation when rebuilding neighbors and UMAP for downstream
+analysis. See the
+[GPU Harmony API reference](https://rapids-singlecell.scverse.org/en/stable/api/generated/rapids_singlecell.pp.harmony_integrate.html)
+for integration parameters. Record the installed `rapids_singlecell` version and
+Harmony settings when reporting results, since defaults can differ across releases.
 
 ## Input data
 
