@@ -346,29 +346,3 @@ These embedding tools require their respective environments. The core environmen
 includes `biopython` (`Bio`) for sequence handling and `scikit-misc` for highly
 variable gene selection with the Seurat v3 method. Other preprocessing scripts
 may also require `pysam` or `mygene`, which are not included in `environment.yml`.
-
-## Examples of integration are included in the notebooks:
-figure2 + hippocampus : [hippocampus.ipynb](hippocampus.ipynb)
-figure2 + pancreas: [pancreas.ipynb](pancreas.ipynb)
-figure2 + motor: [motor.ipynb](motor.ipynb)
-figure2 + testis: [testis.ipynb](testis.ipynb)
-figure3 + 15-species heart atlas spanning vertebrates and invertebrates: [heart.py](heart.py)
-train:
-nohup env CUDA_VISIBLE_DEVICES=0,1 OMP_NUM_THREADS=1 PYTHONUNBUFFERED=1 torchrun --standalone --nproc_per_node=2 heart.py --mode train --weights_pth your_weights.pth > logs/heart.log 2>&1 < /dev/null &
-infer:
-python heart.py --mode infer --metadata-columns Celltype --weights_pth your_weights.pth --output heart_runs/h5ad/result.h5ad
-Note:
-after [heart.py](heart.py) run, you need to run [rap.ipynb](rap.ipynb),which needs to use rapids-singlecell package(https://rapids-singlecell.scverse.org/en/latest/installation.html)
-figure4 + human–mouse spatial brain : [agebrain.ipynb](agebrain.ipynb) [ageb.ipynb](ageb.ipynb)
-figure5 + six-species cerebellar chromatin atlas : [btacsub.py](btacsub.py)
-train:
-nohup env CUDA_VISIBLE_DEVICES=0,1 OMP_NUM_THREADS=1 PYTHONUNBUFFERED=1 torchrun --standalone --nproc_per_node=2 btacsub.py --mode train --weights your_weights.pth --training-objective batch_knn --mmd-weight 1 > logs/btacsub.log 2>&1 < /dev/null &
-infer:
-python btacsub.py --mode infer --metadata-columns Celltype --weights your_weights.pth --batch-size 128 --embedding protein --output btacsub_runs/h5ad/result.h5ad
-Note:
-after  [btacsub.py](btacsub.py) run, you need to run [rap.ipynb](rap.ipynb),which needs to use rapids-singlecell package(https://rapids-singlecell.scverse.org/en/latest/installation.html)
-figure6 : [pbmc1.ipynb](pbmc1.ipynb) [most.ipynb](mosp.ipynb)
-
-
-dataset:
-https://biobigdata.nju.edu.cn/HenosisDataset/

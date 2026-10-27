@@ -46,11 +46,18 @@ SCRIPT_DIRECTORY = Path(__file__).resolve().parent
 RUN_DIRECTORY = SCRIPT_DIRECTORY / "heart_runs"
 
 ORGAN = "heart"
+
+PROJECT_ROOT = Path.cwd()
+DATA_ROOT = Path(
+    os.environ.get("HENOSIS_DATA_DIR", PROJECT_ROOT / "data")
+).expanduser()
+
+
 H5AD_DIRECTORY = Path(
-    "/mnt/public3/caogs/project/Orthoformer_atlas_data/figure2_Heart/model_data"
+    f"{DATA_ROOT}/figure3/{ORGAN}/scrna/model_data"
 )
 EMBED_DIRECTORY = Path(
-    "/mnt/public5/panguanyu/cross_species/crsp/dataprocess/esm_embedding/heart"
+    f"{DATA_ROOT}/figure3/{ORGAN}/embedding/{ORGAN}"
 )
 HF_CACHE_DIRECTORY = Path(
     RUN_DIRECTORY / "cache_all_16"

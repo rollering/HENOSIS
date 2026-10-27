@@ -45,12 +45,18 @@ ORGAN='btac'
 SCRIPT_DIRECTORY = Path(__file__).resolve().parent
 RUN_DIRECTORY = SCRIPT_DIRECTORY / "btacsub_runs"
 
+PROJECT_ROOT = Path.cwd()
+DATA_ROOT = Path(
+    os.environ.get("HENOSIS_DATA_DIR", PROJECT_ROOT / "data")
+).expanduser()
+DATA_DIR = f"{DATA_ROOT}/figure5"
+
 H5AD_DIRECTORY=Path(
-    '/mnt/public3/caogs/project/Orthoformer_atlas_data/scATAC/model_data_from_fianl_data_Simplified_version/deepcerevo'
+    f'{DATA_DIR}/deepcerevo'
 )
 
 EMBED_DIRECTORY=Path(
-    '/mnt/public3/caogs/project/Orthoformer_atlas_data/scATAC/model_data_from_fianl_data_Simplified_version/deepcerevo'
+    f'{DATA_DIR}/deepcerevo'
 )
 
 HF_CACHE_DIRECTORY = Path(
