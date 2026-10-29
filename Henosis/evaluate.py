@@ -141,7 +141,7 @@ def evaluate_integration(
     run_pca=True,
     use_harmony=False,
     use_mot_correction=None,
-    correction_key="X_mot",
+    correction_key="X_Henosis",
     correction_by="inferred_species",
     correction_kwargs=None,
     harmony_key=None,
