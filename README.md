@@ -270,16 +270,16 @@ for input_path in (
         adata,
         key="species",
         basis="X_henosis",
-        adjusted_basis="X_henosis_harmony",
+        adjusted_basis="X_Henosis",
     )
     # Store a CPU array for h5ad serialization and downstream tools.
-    adata.obsm["X_henosis_harmony"] = cp.asnumpy(
-        adata.obsm["X_henosis_harmony"]
+    adata.obsm["X_Henosis"] = cp.asnumpy(
+        adata.obsm["X_Henosis"]
     )
     adata.write_h5ad(input_path.with_name("integrated_harmony.h5ad"))
 ```
 
-The corrected embeddings are stored in `adata.obsm["X_henosis_harmony"]` in
+The corrected embeddings are stored in `adata.obsm["X_Henosis"]` in
 each `integrated_harmony.h5ad`; `adata.X` retains the original Henosis embeddings.
 Use the corrected representation when rebuilding neighbors and UMAP for downstream
 analysis. See the
@@ -451,7 +451,7 @@ integrated_adata.write_h5ad("integrated.h5ad")
 
 `integrated_adata.X` contains the inferred cell embeddings. With MOT correction
 enabled as above, the corrected representation is stored in
-`integrated_adata.obsm["X_mot"]`, and UMAP coordinates are stored in
+`integrated_adata.obsm["X_Henosis"]`, and UMAP coordinates are stored in
 `integrated_adata.obsm["X_umap"]`.
 
 If `adata.obs` has a `celltype` column for every species, add
