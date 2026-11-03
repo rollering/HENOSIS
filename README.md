@@ -197,11 +197,11 @@ mkdir -p outputs/figure3 outputs/figure5
 
 # Figure 3: heart training
 torchrun --standalone --nproc_per_node=1 figure3_heart.py \
-  --mode train --weights_pth outputs/figure3/heart.pth
+  --mode train --weights_pth outputs/figure3/heart.pth --metadata-columns Celltype
 
 # Figure 5: ATAC training
 torchrun --standalone --nproc_per_node=1 figure5_btacsub.py \
-  --mode train --weights outputs/figure5/btac.pth
+  --mode train --weights outputs/figure5/btac.pth --metadata-columns Celltype
 ```
 
 `--nproc_per_node=1` uses one GPU; change it to the number of GPUs you intend to
